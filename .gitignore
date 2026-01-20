@@ -1,0 +1,29 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.launch
+
+# Runtime
+run/
+logs/
+crash-reports/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Minecraft
+remappedSrc/
+Minecraft-Source-1.21.4/
+sgui-1.21.4/
+
+# Local files
+local.properties

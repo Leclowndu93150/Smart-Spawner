@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "smartspawner",
+  "version": "${version}",
+  "name": "smartspawner",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/smartspawner/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "com.leclowndu93150.smartspawner.client.SmartspawnerClient"
+    ],
+    "main": [
+      "com.leclowndu93150.smartspawner.Smartspawner"
+    ]
+  },
+  "mixins": [
+    "smartspawner.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

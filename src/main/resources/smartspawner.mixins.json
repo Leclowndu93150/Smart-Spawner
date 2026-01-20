@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.leclowndu93150.smartspawner.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "SpawnerBlockEntityMixin",
+    "SpawnerBlockMixin",
+    "HopperBlockEntityMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
