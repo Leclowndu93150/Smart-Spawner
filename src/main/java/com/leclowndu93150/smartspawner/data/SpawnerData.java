@@ -11,6 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.List;
 
@@ -153,6 +155,15 @@ public class SpawnerData {
         return tag;
     }
 
+    public void toValueOutput(ValueOutput output) {
+        output.putString("EntityType", BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString());
+        output.putInt("StackSize", stackSize);
+        output.putInt("StoredExp", storedExp);
+        output.putInt("SpawnDelay", spawnDelay);
+        output.putLong("LastSpawnTime", lastSpawnTime);
+        inventory.toValueOutput(output.child("Inventory"));
+    }
+
     private static EntityType<?> parseEntityType(String id) {
         ResourceLocation entityId = ResourceLocation.parse(id);
         var optional = BuiltInRegistries.ENTITY_TYPE.get(entityId);
@@ -166,28 +177,42 @@ public class SpawnerData {
         SpawnerData data = new SpawnerData(pos);
 
         if (tag.contains("EntityType")) {
-            data.entityType = parseEntityType(tag.getString("EntityType"));
+            data.entityType = parseEntityType(tag.getString("EntityType").get());
         }
 
         if (tag.contains("StackSize")) {
-            data.stackSize = tag.getInt("StackSize");
+            data.stackSize = tag.getInt("StackSize").get();
         }
 
         if (tag.contains("StoredExp")) {
-            data.storedExp = tag.getInt("StoredExp");
+            data.storedExp = tag.getInt("StoredExp").get();
         }
 
         if (tag.contains("SpawnDelay")) {
-            data.spawnDelay = tag.getInt("SpawnDelay");
+            data.spawnDelay = tag.getInt("SpawnDelay").get();
         }
 
         if (tag.contains("LastSpawnTime")) {
-            data.lastSpawnTime = tag.getLong("LastSpawnTime");
+            data.lastSpawnTime = tag.getLong("LastSpawnTime").get();
         }
 
         if (tag.contains("Inventory")) {
-            data.inventory = VirtualInventory.fromNbt(tag.getCompound("Inventory"), provider);
+            data.inventory = VirtualInventory.fromNbt(tag.getCompound("Inventory").get(), provider);
         }
+
+        data.dirty = false;
+        return data;
+    }
+
+    public static SpawnerData fromValueInput(BlockPos pos, ValueInput input) {
+        SpawnerData data = new SpawnerData(pos);
+
+        input.getString("EntityType").ifPresent(id -> data.entityType = parseEntityType(id));
+        input.getInt("StackSize").ifPresent(v -> data.stackSize = v);
+        input.getInt("StoredExp").ifPresent(v -> data.storedExp = v);
+        input.getInt("SpawnDelay").ifPresent(v -> data.spawnDelay = v);
+        input.getLong("LastSpawnTime").ifPresent(v -> data.lastSpawnTime = v);
+        input.child("Inventory").ifPresent(child -> data.inventory = VirtualInventory.fromValueInput(child));
 
         data.dirty = false;
         return data;
@@ -204,11 +229,11 @@ public class SpawnerData {
         SpawnerData data = new SpawnerData(pos);
 
         if (tag.contains("EntityType")) {
-            data.entityType = parseEntityType(tag.getString("EntityType"));
+            data.entityType = parseEntityType(tag.getString("EntityType").get());
         }
 
         if (tag.contains("StackSize")) {
-            data.stackSize = tag.getInt("StackSize");
+            data.stackSize = tag.getInt("StackSize").get();
         }
 
         return data;

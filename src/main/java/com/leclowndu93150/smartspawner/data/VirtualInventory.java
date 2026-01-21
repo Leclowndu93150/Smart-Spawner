@@ -12,6 +12,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -143,11 +145,11 @@ public class VirtualInventory {
 
         if (!tag.contains("Items")) return inventory;
 
-        ListTag itemsList = tag.getList("Items", Tag.TAG_COMPOUND);
+        ListTag itemsList = tag.getList("Items").get();
         for (int i = 0; i < itemsList.size(); i++) {
-            CompoundTag itemTag = itemsList.getCompound(i);
-            String itemId = itemTag.getString("Item");
-            long count = itemTag.getLong("Count");
+            CompoundTag itemTag = itemsList.getCompound(i).get();
+            String itemId = itemTag.getString("Item").get();
+            long count = itemTag.getLong("Count").get();
 
             DataComponentPatch components = DataComponentPatch.EMPTY;
             if (itemTag.contains("Components")) {
@@ -160,6 +162,41 @@ public class VirtualInventory {
             ItemSignature sig = new ItemSignature(itemId, components);
             inventory.items.put(sig, count);
         }
+
+        return inventory;
+    }
+
+    public void toValueOutput(ValueOutput output) {
+        ValueOutput.ValueOutputList itemsList = output.childrenList("Items");
+
+        for (Map.Entry<ItemSignature, Long> entry : items.entrySet()) {
+            ValueOutput itemOutput = itemsList.addChild();
+            itemOutput.putString("Item", entry.getKey().getItemId());
+
+            DataComponentPatch components = entry.getKey().getComponents();
+            if (!components.isEmpty()) {
+                itemOutput.store("Components", DataComponentPatch.CODEC, components);
+            }
+
+            itemOutput.putLong("Count", entry.getValue());
+        }
+    }
+
+    public static VirtualInventory fromValueInput(ValueInput input) {
+        VirtualInventory inventory = new VirtualInventory();
+
+        input.childrenList("Items").ifPresent(itemsList -> {
+            for (ValueInput itemInput : itemsList) {
+                String itemId = itemInput.getStringOr("Item", "minecraft:air");
+                long count = itemInput.getLongOr("Count", 0L);
+
+                DataComponentPatch components = itemInput.read("Components", DataComponentPatch.CODEC)
+                    .orElse(DataComponentPatch.EMPTY);
+
+                ItemSignature sig = new ItemSignature(itemId, components);
+                inventory.items.put(sig, count);
+            }
+        });
 
         return inventory;
     }

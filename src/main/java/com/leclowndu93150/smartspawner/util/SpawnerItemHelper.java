@@ -50,7 +50,7 @@ public class SpawnerItemHelper {
         CompoundTag tag = customData.copyTag();
         if (!tag.contains(SMART_SPAWNER_TAG)) return null;
 
-        return tag.getCompound(SMART_SPAWNER_TAG);
+        return tag.getCompound(SMART_SPAWNER_TAG).get();
     }
 
     public static EntityType<?> getEntityType(ItemStack stack) {
@@ -59,7 +59,7 @@ public class SpawnerItemHelper {
             return EntityType.PIG;
         }
 
-        ResourceLocation entityId = ResourceLocation.parse(tag.getString("EntityType"));
+        ResourceLocation entityId = ResourceLocation.parse(tag.getString("EntityType").get());
         var optional = BuiltInRegistries.ENTITY_TYPE.get(entityId);
         if (optional.isPresent()) {
             return optional.get().value();
@@ -73,7 +73,7 @@ public class SpawnerItemHelper {
             return 1;
         }
 
-        return tag.getInt("StackSize");
+        return tag.getInt("StackSize").get();
     }
 
     private static CompoundTag wrapTag(CompoundTag inner) {

@@ -163,18 +163,18 @@ public class SpawnerDataManager {
             CompoundTag worldTag = NbtIo.readCompressed(worldFile, NbtAccounter.unlimitedHeap());
             if (!worldTag.contains("Spawners")) return;
 
-            ListTag spawnersList = worldTag.getList("Spawners", Tag.TAG_COMPOUND);
+            ListTag spawnersList = worldTag.getList("Spawners").get();
             Map<BlockPos, SpawnerData> worldSpawners = new ConcurrentHashMap<>();
 
             for (int i = 0; i < spawnersList.size(); i++) {
-                CompoundTag spawnerTag = spawnersList.getCompound(i);
-                int x = spawnerTag.getInt("X");
-                int y = spawnerTag.getInt("Y");
-                int z = spawnerTag.getInt("Z");
+                CompoundTag spawnerTag = spawnersList.getCompound(i).get();
+                int x = spawnerTag.getInt("X").get();
+                int y = spawnerTag.getInt("Y").get();
+                int z = spawnerTag.getInt("Z").get();
                 BlockPos pos = new BlockPos(x, y, z);
 
                 if (spawnerTag.contains("Data")) {
-                    SpawnerData data = SpawnerData.fromNbt(pos, spawnerTag.getCompound("Data"), server.registryAccess());
+                    SpawnerData data = SpawnerData.fromNbt(pos, spawnerTag.getCompound("Data").get(), server.registryAccess());
                     worldSpawners.put(pos, data);
                 }
             }

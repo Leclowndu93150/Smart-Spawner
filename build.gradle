@@ -7,7 +7,7 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-    archivesName = project.archives_base_name+"-1.21.4-Fabric"
+    archivesName = project.archives_base_name+"-1.21.10-Fabric"
 }
 
 
@@ -21,7 +21,7 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation include("eu.pb4:sgui:1.8.2+1.21.4")
+    modImplementation include("eu.pb4:sgui:1.11.0+1.21.9")
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
