@@ -14,22 +14,25 @@ public class SpawnerItemHelper {
     public static final String SMART_SPAWNER_TAG = "SmartSpawner";
 
     public static ItemStack createSpawnerItem(SpawnerData data) {
-        ItemStack stack = new ItemStack(Items.SPAWNER);
-
-        CompoundTag tag = data.toItemNbt();
-        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(wrapTag(tag)));
-
-        return stack;
+        return createSpawnerItem(data.getEntityType(), data.getStackSize());
     }
 
     public static ItemStack createSpawnerItem(EntityType<?> entityType, int stackSize) {
         ItemStack stack = new ItemStack(Items.SPAWNER);
 
+        // SmartSpawner custom data
         CompoundTag tag = new CompoundTag();
         tag.putString("EntityType", BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString());
         tag.putInt("StackSize", stackSize);
-
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(wrapTag(tag)));
+
+        CompoundTag blockEntityTag = new CompoundTag();
+        CompoundTag spawnData = new CompoundTag();
+        CompoundTag entity = new CompoundTag();
+        entity.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString());
+        spawnData.put("entity", entity);
+        blockEntityTag.put("SpawnData", spawnData);
+        stack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(blockEntityTag));
 
         return stack;
     }
