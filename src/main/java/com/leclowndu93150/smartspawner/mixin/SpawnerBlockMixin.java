@@ -19,11 +19,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SpawnerBlock;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import net.minecraft.world.entity.LivingEntity;
+import java.util.List;
 
 @Mixin(SpawnerBlock.class)
 public abstract class SpawnerBlockMixin extends Block {
@@ -59,21 +64,61 @@ public abstract class SpawnerBlockMixin extends Block {
         return InteractionResult.CONSUME;
     }
 
-    @Inject(method = "spawnAfterBreak", at = @At("HEAD"), cancellable = true)
-    private void smartspawner$spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience, CallbackInfo ci) {
-        SpawnerData data = SpawnerDataManager.get(level, pos);
-        if (data == null) return;
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
 
+        if (level instanceof ServerLevel serverLevel && SpawnerItemHelper.isSmartSpawner(stack)) {
+            EntityType<?> entityType = SpawnerItemHelper.getEntityType(stack);
+            int stackSize = SpawnerItemHelper.getStackSize(stack);
+
+            SpawnerData data = SpawnerDataManager.getOrCreate(serverLevel, pos);
+            data.setEntityType(entityType);
+            data.setStackSize(stackSize);
+
+            if (level.getBlockEntity(pos) instanceof SpawnerBlockEntity spawnerBlockEntity) {
+                spawnerBlockEntity.setEntityId(entityType, level.getRandom());
+            }
+        }
+    }
+
+    @Override
+    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+        ItemStack tool = builder.getOptionalParameter(LootContextParams.TOOL);
+        if (tool == null) {
+            return super.getDrops(state, builder);
+        }
+
+        ServerLevel level = builder.getLevel();
         var enchantmentRegistry = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
         var silkTouchHolder = enchantmentRegistry.getOrThrow(Enchantments.SILK_TOUCH);
         boolean hasSilkTouch = EnchantmentHelper.getItemEnchantmentLevel(silkTouchHolder, tool) > 0;
 
         if (hasSilkTouch) {
-            ItemStack spawnerItem = SpawnerItemHelper.createSpawnerItem(data);
-            Block.popResource(level, pos, spawnerItem);
-            ci.cancel();
+            BlockPos pos = BlockPos.containing(builder.getOptionalParameter(LootContextParams.ORIGIN));
+            SpawnerData data = SpawnerDataManager.get(level, pos);
+
+            ItemStack spawnerItem;
+            if (data != null) {
+                spawnerItem = SpawnerItemHelper.createSpawnerItem(data);
+            } else {
+                var blockEntity = builder.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+                if (blockEntity instanceof SpawnerBlockEntity spawnerBlockEntity) {
+                    EntityType<?> entityType = getSpawnerEntityType(spawnerBlockEntity);
+                    spawnerItem = SpawnerItemHelper.createSpawnerItem(entityType, 1);
+                } else {
+                    spawnerItem = SpawnerItemHelper.createSpawnerItem(EntityType.PIG, 1);
+                }
+            }
+
+            return List.of(spawnerItem);
         }
 
+        return super.getDrops(state, builder);
+    }
+
+    @Inject(method = "spawnAfterBreak", at = @At("TAIL"))
+    private void smartspawner$spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack tool, boolean dropExperience, CallbackInfo ci) {
         SpawnerDataManager.remove(level, pos);
     }
 
